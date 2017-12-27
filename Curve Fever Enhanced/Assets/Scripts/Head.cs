@@ -4,8 +4,15 @@ public class Head : MonoBehaviour
 {
 	public float movementSpeed = 3f;
 	public float turnSpeed = 250f;
-	public string inputAxis = "Horizontal";
+	public string inputAxis = "Horizontal1";
+
+	private Player player;
 	private float horizontal;
+
+	void Start()
+	{
+		player = GetComponentInParent<Player>();
+	}
 
 	void Update()
 	{
@@ -20,10 +27,17 @@ public class Head : MonoBehaviour
 
 	void OnTriggerEnter2D(Collider2D col)
 	{
-		if (col.tag == "Hazard")
+		if (col.tag == "Hazard" && !player.isImmune)
 		{
+			if (GameManager.PlayersAlive > 2)
+			{
+				GameManager.PlayersAlive--;
+			}
+			else
+			{
+				GameManager.Instance.GameOver();
+			}
 			Destroy(gameObject);
-			GameManager.Instance.GameOver();
 		}
 	}
 }

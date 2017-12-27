@@ -7,9 +7,20 @@ public class GameManager : MonoBehaviour
 {
 	public static GameManager Instance;
 	public static bool GameOverState = false;
+	public static int PlayersAlive = 0;
 
+	public GameObject playerPrefab;
+	public float spawnMargin;
 	public Color[] tailColors;
 	public bool[] usedColors;
+
+	[SerializeField]
+	private List<GameObject> players;
+
+	void Start()
+	{
+		GameOver();
+	}
 
 	void Awake()
 	{
@@ -23,6 +34,17 @@ public class GameManager : MonoBehaviour
 			Destroy(gameObject);
 		}
 		usedColors = new bool[tailColors.Length];
+		spawnMargin = Mathf.Max(Settings.BattlefieldWidth / 10f, Settings.BattlefieldHeight / 10f);
+		for (int i = 0; i < Mathf.Min(Settings.NumberOfPlayers, 4); i++)
+		{
+			GameObject newPlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+			Transform newPlayerHeadTransform = newPlayer.GetComponentInChildren<Head>().gameObject.transform;
+			newPlayerHeadTransform.position = GetRandomPosition();
+			newPlayerHeadTransform.eulerAngles = new Vector3(0f, 0f, Random.Range(0f, 360f));
+			players.Add(newPlayer);
+			PlayersAlive++;
+			newPlayer.GetComponentInChildren<Head>().inputAxis = "Horizontal" + PlayersAlive.ToString();
+		}
 	}
 
 	public void GameOver()
@@ -43,7 +65,7 @@ public class GameManager : MonoBehaviour
 		SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 	}
 
-	public Color getTailColor()
+	public Color GetTailColor()
 	{
 		int randomIndex = 0;
 		bool colorSelected = false;
@@ -61,9 +83,20 @@ public class GameManager : MonoBehaviour
 		return tailColor;
 	}
 
+	Vector3 GetRandomPosition()
+	{
+		Vector3 randomPosition = new Vector3(
+			                         Random.Range(-(Settings.BattlefieldWidth - spawnMargin), Settings.BattlefieldWidth - spawnMargin),
+			                         Random.Range(-(Settings.BattlefieldHeight - spawnMargin), Settings.BattlefieldHeight - spawnMargin),
+			                         0f
+		                         );
+		return randomPosition;
+	}
+
 	private void ResetGame()
 	{
 		GameOverState = false;
+		PlayersAlive = 0;
 		for (int i = 0; i < usedColors.Length; i++)
 		{
 			usedColors[i] = false;

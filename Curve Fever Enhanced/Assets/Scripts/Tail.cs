@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,45 +8,44 @@ using UnityEngine;
 public class Tail : MonoBehaviour
 {
 	public float pointSpacing = 0.1f;
-	public Transform head;
+	public LineRenderer line;
 
 	private List<Vector2> points;
-	private LineRenderer line;
 	private EdgeCollider2D col;
-	private Color tailColor;
-	private bool drawLine = true;
+	[SerializeField]
+	private bool isDrawing = true;
+	[SerializeField]
+	private Transform head;
 
 	void Start()
 	{
 		line = GetComponent<LineRenderer>();
 		col = GetComponent<EdgeCollider2D>();
-
-		tailColor = GameManager.Instance.getTailColor();
-		line.startColor = tailColor;
-		line.endColor = tailColor;
+		head = GetComponentInParent<Player>().headTransform;
 
 		points = new List<Vector2>();
-		SetPoint();
 	}
 
 	void Update()
 	{
 		if (head == null)
 		{
+			head = GetComponentInParent<Player>().headTransform;
 			return;
 		}
-		if (Input.GetMouseButtonUp(0))
+		if (points.Count <= 0)
 		{
-			if (drawLine)
-			{
-				drawLine = false;
-			}
-			else
-			{
-				drawLine = true;
-			}
+			SetPoint();
 		}
-		if (Vector3.Distance(points.Last(), head.position) > pointSpacing && drawLine)
+		if (!line.enabled)
+		{
+			line.enabled = true;
+		}
+		if (!isDrawing)
+		{
+			return;
+		}
+		if (Vector3.Distance(points.Last(), head.position) > pointSpacing)
 		{
 			SetPoint();
 		}
@@ -60,5 +60,21 @@ public class Tail : MonoBehaviour
 		points.Add(head.position);
 		line.positionCount = points.Count;
 		line.SetPosition(points.Count - 1, head.position);
+	}
+
+	public void DisableDrawing()
+	{
+		isDrawing = false;
+		StartCoroutine(SynchronizeCollider());
+	}
+
+	IEnumerator SynchronizeCollider()
+	{
+		yield return new WaitForSeconds(0.2f);
+
+		if (points.Count > 1)
+		{
+			col.points = points.ToArray<Vector2>();
+		}
 	}
 }
